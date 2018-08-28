@@ -13,30 +13,33 @@ const Message = mongoose.model("Message", {
     active: { type: Boolean, default: true }
 });
 
-app.get("/", function(req, res) {
-    res.sendFile(__dirname + "/index.html");
-});
-
 io.on("connection", function(socket) {
     socket.on("chat message", msg => {
+        console.log(msg);
+
         Message.create({
             inhalt: msg.message,
             author: msg.author
         }).then(res => {
             io.emit("chat message", {
-                message: msg.message,
-                datum: res.zeit,
-                author: msg.author
+                id: res._id,
+                active: true,
+                message: res.inhalt,
+                datum: msg.zeit,
+                author: res.author
             });
-            console.log(res);
         });
     });
     Message.find()
         .sort({ zeit: -1 })
-        .limit(20)
+        .limit(10)
         .then(msgs => {
             msgs.reverse().forEach(msg => {
+                console.log("alter");
+                console.log(msg);
                 socket.emit("chat message", {
+                    id: msg._id,
+                    active: msg.active,
                     message: msg.inhalt,
                     datum: msg.zeit,
                     author: msg.author
