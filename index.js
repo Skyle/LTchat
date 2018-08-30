@@ -14,6 +14,20 @@ const Message = mongoose.model("Message", {
 });
 
 io.on("connection", function(socket) {
+    Message.find()
+        .sort({ zeit: -1 })
+        .limit(10)
+        .then(msgs => {
+            msgs.reverse().forEach(msg => {
+                socket.emit("chat message", {
+                    id: msg._id,
+                    active: msg.active,
+                    message: msg.inhalt,
+                    datum: msg.zeit,
+                    author: msg.author
+                });
+            });
+        });
     socket.on("chat message", msg => {
         console.log(msg);
 
@@ -30,22 +44,6 @@ io.on("connection", function(socket) {
             });
         });
     });
-    Message.find()
-        .sort({ zeit: -1 })
-        .limit(10)
-        .then(msgs => {
-            msgs.reverse().forEach(msg => {
-                console.log("alter");
-                console.log(msg);
-                socket.emit("chat message", {
-                    id: msg._id,
-                    active: msg.active,
-                    message: msg.inhalt,
-                    datum: msg.zeit,
-                    author: msg.author
-                });
-            });
-        });
 });
 
 http.listen(3001, function() {
